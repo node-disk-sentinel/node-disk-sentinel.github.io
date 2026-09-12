@@ -1,0 +1,223 @@
+{{ define "main" }}
+<header class="navbar">
+  <div class="container nav-content">
+    <a href="/" class="brand">
+      <img src="/favicon.svg" alt="Node Disk Sentinel Logo" class="icon-brand" width="32" height="32">
+      <span>Node Disk Sentinel</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#installation">Installation</a>
+      <a href="{{ .Site.Params.github_repo }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+        {{ partial "icon.html" (dict "name" "github" "class" "icon-btn") }}
+        <span>GitHub</span>
+      </a>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        {{ partial "icon.html" (dict "name" "sun" "id" "themeIconSun" "style" "display:none") }}
+        {{ partial "icon.html" (dict "name" "moon" "id" "themeIconMoon") }}
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-content">
+      <span class="badge">Autonomous Disk Health & Telemetry</span>
+      <h1 class="hero-title">{{ .Site.Params.tagline }}</h1>
+      <p class="hero-subtitle">
+        A Kubernetes-native DaemonSet that autonomously discovers physical disks on every node, assesses their health via a prioritized multi-protocol SMART cascade, publishes live telemetry into cluster-scoped <code>PhysicalDisk</code> resources, and exports Prometheus metrics.
+      </p>
+      <div class="hero-actions">
+        <a href="#installation" class="btn btn-primary">Quickstart Installation</a>
+        <a href="{{ .Site.Params.github_repo }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          {{ partial "icon.html" (dict "name" "github" "class" "icon-btn") }}
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Flow / Architecture Summary -->
+  <section class="section" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <h2>Lightweight & Resilient Architecture</h2>
+        <p>No separate smartd daemon or heavy control planes. Direct kernel integration with standard Kubernetes controllers.</p>
+      </div>
+      
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <h3>Host udev & Netlink</h3>
+          <p>Scans <code>/run/udev/data</code> and listens to kernel Netlink group 2 for hotplug <code>add</code>, <code>remove</code>, and <code>offline</code> events.</p>
+        </div>
+        <div class="pipeline-step">
+          <h3>Smartmontools Runner</h3>
+          <p>Privileged host engine running <code>smartctl</code> with safe power-state handling and robust device fallback.</p>
+        </div>
+        <div class="pipeline-step">
+          <h3>Health Assessment</h3>
+          <p>Deterministic, prioritized SMART health assessment for ATA, NVMe, and SCSI devices classifying drives into explicit health categories.</p>
+        </div>
+        <div class="pipeline-step">
+          <h3>Kubernetes CRD & Metrics</h3>
+          <p>Publishes cluster-scoped <code>PhysicalDisk</code> records and exposes Prometheus metrics.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="section section-alt" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Built for Production Clusters</h2>
+        <p>Reliable telemetry designed for bare-metal Kubernetes, Harvester, Ceph/Rook, and Longhorn storage nodes.</p>
+      </div>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "heart-pulse") }}
+            </div>
+            <h3>Prioritized Assessment</h3>
+          </div>
+          <p>Prioritized multi-protocol severity cascade evaluating device self-tests, hardware threshold violations, sector errors, and past failures.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "harddisk") }}
+            </div>
+            <h3>NVMe & SCSI Support</h3>
+          </div>
+          <p>Native parsing of NVMe health logs (available spare, critical warnings, media errors, wear percentage) and SCSI error counters.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "tune") }}
+            </div>
+            <h3>Per-Disk Configuration</h3>
+          </div>
+          <p>Apply custom <code>smartctl</code> options for RAID controllers, USB bridges, and non-standard hardware. Changes take effect immediately.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "sleep") }}
+            </div>
+            <h3>Sleep & Standby Aware</h3>
+          </div>
+          <p>Preserves low-power states of spinning disks by skipping checks on standby media without false degradation alerts.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "timeline") }}
+            </div>
+            <h3>Prometheus Metrics</h3>
+          </div>
+          <p>Exports complete <code>smartctl_device_*</code> metrics on <code>:8080/metrics</code>, compatible with existing Prometheus and Grafana dashboards.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              {{ partial "icon.html" (dict "name" "shield-check") }}
+            </div>
+            <h3>Node Scoped & Secure</h3>
+          </div>
+          <p>Cache-scoped Informers prevent O(N²) cluster watch fan-out. Sender credentials ensure udev events cannot be forged.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation / Quickstart -->
+  <section class="section" id="installation">
+    <div class="container">
+      <div class="section-header">
+        <h2>Quickstart Installation</h2>
+        <p>Deploy in seconds using the split Helm charts for clean lifecycle management.</p>
+      </div>
+
+      <div class="code-box">
+        <div class="code-header">
+          <span>Helm Deployment (Recommended)</span>
+        </div>
+        <pre><code><span class="comment"># 1. Install the CustomResourceDefinition chart (with keep policy on uninstall)</span>
+helm upgrade --install node-disk-sentinel-crd \
+  oci://ghcr.io/node-disk-sentinel/charts/node-disk-sentinel-crd \
+  --namespace nds-system \
+  --create-namespace
+
+<span class="comment"># 2. Install the DaemonSet monitor chart</span>
+helm upgrade --install node-disk-sentinel \
+  oci://ghcr.io/node-disk-sentinel/charts/node-disk-sentinel \
+  --namespace nds-system</code></pre>
+      </div>
+
+      <div class="code-box code-box-spacing">
+        <div class="code-header">
+          <span>Verify Discovered Disks</span>
+        </div>
+        <pre><code><span class="prompt">$</span> kubectl get physicaldisks
+<span class="output">NAME                                  NODE             HEALTH   ROTATIONAL   MODEL               CAPACITY        TEMP   AGE
+kaitain-node-0-pci-0000-00-04.0       kaitain-node-0   Good     false        SAMSUNG MZQL21T9    1920383410176   38     5m
+kaitain-node-0-0x50014ee265882b7f     kaitain-node-0   Good     true         WDC WD10EZEX-08W    1000204886016   34     5m</span></code></pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-content">
+    <p>Released under the <a href="{{ .Site.Params.github_repo }}/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Apache 2.0 License</a>.</p>
+    <p><a href="{{ .Site.Params.github_repo }}" target="_blank" rel="noopener noreferrer">GitHub Repository</a> · <a href="{{ .Site.Params.github_repo }}/issues" target="_blank" rel="noopener noreferrer">Issues & Feedback</a></p>
+  </div>
+</footer>
+
+<script>
+  (function() {
+    const toggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('themeIconSun');
+    const moonIcon = document.getElementById('themeIconMoon');
+
+    function isDark() {
+      const theme = document.documentElement.getAttribute('data-theme');
+      if (theme) return theme === 'dark';
+      return !window.matchMedia('(prefers-color-scheme: light)').matches;
+    }
+
+    function updateIcons() {
+      const dark = isDark();
+      if (dark) {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+        toggle.setAttribute('aria-label', 'Switch to light theme');
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+        toggle.setAttribute('aria-label', 'Switch to dark theme');
+      }
+    }
+
+    updateIcons();
+
+    toggle.addEventListener('click', function() {
+      const nextTheme = isDark() ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      localStorage.setItem('theme', nextTheme);
+      updateIcons();
+    });
+  })();
+</script>
+{{ end }}

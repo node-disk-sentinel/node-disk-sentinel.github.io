@@ -1,0 +1,12 @@
+DirectoryPath: public
+OutputDir: .tmp/.htmltest
+CheckExternal: false
+CheckInternal: true
+CheckMailto: false
+CheckTel: false
+CheckFavicons: false
+CheckImages: true
+CheckScripts: false
+IgnoreURLs:
+  - "^http://localhost"
+IgnoreInternalEmptyHash: true
