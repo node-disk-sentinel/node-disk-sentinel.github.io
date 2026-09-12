@@ -1,0 +1,18 @@
+baseURL = 'https://node-disk-sentinel.org/'
+languageCode = 'en'
+title = 'Node Disk Sentinel'
+
+# Disable unused kinds for a pure landing page to avoid taxonomy/rss warnings
+disableKinds = ['taxonomy', 'term', 'RSS']
+
+[params]
+  description = 'Kubernetes node disk health and telemetry operator'
+  tagline = 'Kubernetes Node Disk Health & Telemetry Operator'
+  github_repo = 'https://github.com/node-disk-sentinel/node-disk-sentinel'
+  license = 'Apache-2.0'
+  image = 'ghcr.io/node-disk-sentinel/node-disk-sentinel'
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
