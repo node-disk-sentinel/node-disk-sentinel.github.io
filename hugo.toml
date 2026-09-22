@@ -6,8 +6,8 @@ title = 'Node Disk Sentinel'
 disableKinds = ['taxonomy', 'term', 'RSS']
 
 [params]
-  description = 'Kubernetes node disk health and telemetry operator'
-  tagline = 'Kubernetes Node Disk Health & Telemetry Operator'
+  description = 'Predict and handle failing Kubernetes node disks before workloads are impacted.'
+  tagline = 'Disk failure is inevitable. Downtime isn’t.'
   github_repo = 'https://github.com/node-disk-sentinel/node-disk-sentinel'
   license = 'Apache-2.0'
   image = 'ghcr.io/node-disk-sentinel/node-disk-sentinel'

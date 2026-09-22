@@ -26,11 +26,12 @@
   <!-- Hero Section -->
   <section class="hero">
     <div class="container hero-content">
-      <span class="badge">Autonomous Disk Health & Telemetry</span>
+      <span class="badge">Node Disk Sentinel</span>
       <h1 class="hero-title">{{ .Site.Params.tagline }}</h1>
       <p class="hero-subtitle">
-        A Kubernetes-native DaemonSet that autonomously discovers physical disks on every node, assesses their health via a prioritized multi-protocol SMART cascade, publishes live telemetry into cluster-scoped <code>PhysicalDisk</code> resources, and exports Prometheus metrics.
+        {{ .Site.Params.description }}
       </p>
+      <p class="hero-proof">Continuous SMART assessment for every node disk, with Kubernetes resources and Prometheus metrics for the response workflow you already use.</p>
       <div class="hero-actions">
         <a href="#installation" class="btn btn-primary">Quickstart Installation</a>
         <a href="{{ .Site.Params.github_repo }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
