@@ -65,10 +65,9 @@
         </div>
         <div class="pipeline-step">
           <h3>Kubernetes CRD & Metrics</h3>
-          <p>Publishes cluster-scoped <code>PhysicalDisk</code> records and exposes <code>smartctl_exporter</code> compatible Prometheus metrics.</p>
+          <p>Publishes current disk state to cluster-scoped <code>PhysicalDisk</code> records and exposes drop-in <code>smartctl_exporter</code>-compatible Prometheus metrics.</p>
         </div>
       </div>
-
     </div>
   </section>
 
@@ -77,7 +76,7 @@
     <div class="container">
       <div class="section-header">
         <h2>Built for Production Clusters</h2>
-        <p>Reliable telemetry designed for bare-metal Kubernetes, Harvester, Ceph/Rook, and Longhorn storage nodes.</p>
+        <p>Reliable telemetry designed for bare-metal Kubernetes and storage-intensive workloads.</p>
       </div>
 
       <div class="grid grid-3">
@@ -88,7 +87,7 @@
             </div>
             <h3>Prioritized Assessment</h3>
           </div>
-          <p>Prioritized multi-protocol severity cascade evaluating device self-tests, hardware threshold violations, sector errors, and past failures.</p>
+          <p>Prioritized multi-protocol cascade based on <code>libatasmart</code>, NVMe specifications, and Backblaze reliability research to deliver predictable, deterministic severity levels.</p>
         </div>
 
         <div class="card">
@@ -192,8 +191,8 @@ kaitain-node-0-0x50014ee265882b7f     kaitain-node-0   Good     true         WDC
         <details class="faq-item">
           <summary class="faq-question">Can I monitor disks behind a Hardware RAID controller?</summary>
           <div class="faq-answer">
-            <p>Node Disk Sentinel maintains a strict 1:1 mapping with OS block devices (<code>/dev/sd*</code>, <code>/dev/nvme*n*</code>). Hardware RAID controllers (HPE Smart Array, MegaRAID, Dell PERC) combine drives into virtual logical volumes, hiding physical disks from the operating system and causing <code>smartctl</code> collection errors (e.g. <code>requires option '-d cciss,N'</code>).</p>
-            <p>We strongly recommend configuring storage controllers in <strong>HBA / IT / Pass-Through mode</strong> (standard for Kubernetes, Ceph, and Longhorn) so each physical drive is exposed directly to the OS and monitored individually. Alternatively, virtual volumes can be excluded via <code>discovery.exclude</code>.</p>
+            <p>Node Disk Sentinel maintains a strict 1:1 mapping with OS block devices (<code>/dev/sd*</code>, <code>/dev/nvme*n*</code>). Hardware RAID controllers combine drives into virtual logical volumes, hiding physical disks from the operating system and causing <code>smartctl</code> collection errors (e.g. <code>requires option '-d cciss,N'</code>).</p>
+            <p>We strongly recommend configuring storage controllers in <strong>HBA / IT / Pass-Through mode</strong> so each physical drive is exposed directly to the OS and monitored individually. Alternatively, virtual volumes can be excluded via <code>discovery.exclude</code>.</p>
           </div>
         </details>
 
@@ -225,6 +224,31 @@ kaitain-node-0-0x50014ee265882b7f     kaitain-node-0   Good     true         WDC
           <div class="faq-answer">
             <p>Kernel device letters (<code>/dev/sda</code>, <code>/dev/sdb</code>) are dynamic and can swap across reboots or bus rescans. Node Disk Sentinel resolves this through <strong>predictable device names and paths</strong>:</p>
             <p>Device paths (<code>status.info.path</code>) follow a strict hierarchy of persistent udev symlinks: WWN (<code>/dev/disk/by-id/wwn-*</code>), NVMe EUI, model/serial, and PCIe bus topology (<code>/dev/disk/by-path/*</code>). Furthermore, Kubernetes <code>PhysicalDisk</code> resource names are derived deterministically from hardware identifiers, ensuring metric labels and alerting rules survive reboots and controller resets.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Why expose PhysicalDisk resources when Prometheus already provides metrics?</summary>
+          <div class="faq-answer">
+            <p>Prometheus is the intended source for time-series telemetry, trends, and alerts using the daemon's drop-in <code>smartctl_exporter</code>-compatible metrics. The <code>PhysicalDisk</code> resource serves a different purpose: it provides current disk state and inventory through the Kubernetes API, so in-cluster controllers can react using standard informers and watches without a runtime dependency on a Prometheus query API.</p>
+            <p>It also provides immediate <code>kubectl</code> visibility and declarative per-disk <code>smartctl</code> configuration.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Do PhysicalDisk status updates put significant load on etcd?</summary>
+          <div class="faq-answer">
+            <p>No. Node Disk Sentinel does not use etcd as a time-series database. Each resource holds only the latest health state, conditions, and compact telemetry snapshot; it never accumulates historical data.</p>
+            <p>With the default 10-minute polling interval, a 100-node cluster with six disks per node produces about one status update per second across the cluster. Historical metrics, downsampling, and retention are handled by Prometheus and its configured long-term storage.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">What industry standards and research is the health assessment based on?</summary>
+          <div class="faq-answer">
+            <p>The evaluation model is built on established storage specifications and large-scale empirical research:</p>
+            <p>For ATA drives, it adopts the multi-protocol severity cascade from <code>libatasmart</code> (the long-standing Linux library for storage health). For NVMe, it evaluates the official NVM Express Base Specification <em>Critical Warning</em> register, spare thresholds, and wear endurance. For SCSI/SAS, it queries standard SCSI Primary Commands (SPC) error counter logs.</p>
+            <p>Furthermore, large-scale empirical studies (such as Backblaze drive statistics) consistently show that unrecovered and pending sector counts are the primary leading indicators of imminent drive failure, long before manufacturers' self-tests report a failure.</p>
           </div>
         </details>
       </div>
