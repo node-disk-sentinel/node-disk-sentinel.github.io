@@ -6,7 +6,7 @@ Source repository for the static website hosted at [https://node-disk-sentinel.o
 
 You can build and test the site locally using `make`.
 
-If `hugo` or `htmltest` are not installed on your host, the Makefile automatically downloads pinned binaries into `./bin/`.
+Docker (or Podman) is the only requirement: Hugo and htmltest run in pinned container images, so nothing has to be installed. `HUGO_VERSION`, `HTMLTEST_VER` and `PORT` can be overridden, `DOCKER=podman` switches the container engine, and `HUGO=hugo` / `HTMLTEST=htmltest` use local binaries instead.
 
 ```sh
 # Build site and run htmltest link & syntax validation

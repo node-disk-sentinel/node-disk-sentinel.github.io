@@ -1,16 +1,15 @@
 ROOT         := $(realpath $(dir $(realpath $(firstword $(MAKEFILE_LIST)))))
-BIN_DIR      := $(ROOT)/bin
 PUBLIC_DIR   := $(ROOT)/public
 
-HUGO_VERSION ?= 0.128.0
-HUGO_BIN     := $(BIN_DIR)/hugo
+HUGO_VERSION ?= 0.167.0
+HUGO_IMAGE   ?= ghcr.io/gohugoio/hugo:v$(HUGO_VERSION)
+HUGO_FLAGS   ?=
 
-HTMLTEST_BIN := $(BIN_DIR)/htmltest
-HTMLTEST_VER := 0.17.0
+HTMLTEST_VER   ?= 0.17.0
+HTMLTEST_IMAGE ?= wjdp/htmltest:v$(HTMLTEST_VER)
 
-# Detect host architecture for binary downloads
-MK_HOST_ARCH ?= $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-ARCH         ?= $(MK_HOST_ARCH)
+DOCKER       ?= docker
+PORT         ?= 1313
 
 # Output formatting
 ifdef CI
@@ -25,6 +24,22 @@ endif
 
 BANNER = @printf "$(BOLD)$(CYAN)[target: $@]$(RESET)\n"
 
+# Allocate a TTY in dev (for ctrl+c) but not in CI
+TTY := $(if $(CI),,-it)
+
+DOCKER_RUN = $(DOCKER) run --rm $(TTY) \
+	--user $(shell id -u):$(shell id -g) \
+	-v $(ROOT):/project
+
+# Override with HUGO=hugo / HTMLTEST=htmltest to use local binaries instead of containers
+HUGO ?= $(DOCKER_RUN) \
+	-e HUGO_CACHEDIR=/tmp/hugo_cache \
+	-e HUGO_ENVIRONMENT \
+	$(if $(filter serve,$(MAKECMDGOALS)),-p 127.0.0.1:$(PORT):$(PORT)) \
+	$(HUGO_IMAGE)
+
+HTMLTEST ?= $(DOCKER_RUN) --entrypoint htmltest -w /project $(HTMLTEST_IMAGE)
+
 .DEFAULT_GOAL := default
 
 .PHONY: default build serve test validate validate-ci ci clean
@@ -35,24 +50,20 @@ default: build test
 # Full CI target: build, validate links, check git clean state
 ci: build test validate-ci
 
-# ---- Directories ----
-$(BIN_DIR):
-	@mkdir -p $@
-
 # ---- Build Site ----
-build: $(HUGO_BIN)
+build:
 	$(BANNER)
-	$(HUGO_BIN) --minify
+	$(HUGO) --minify $(HUGO_FLAGS)
 
 # ---- Serve locally with hot reload (http://localhost:1313) ----
-serve: $(HUGO_BIN)
+serve:
 	$(BANNER)
-	$(HUGO_BIN) server -D
+	$(HUGO) server -D --bind 0.0.0.0 --port $(PORT)
 
 # ---- Tests (Validates HTML links, anchors, and images) ----
-test: build $(HTMLTEST_BIN)
+test: build
 	$(BANNER)
-	$(HTMLTEST_BIN)
+	$(HTMLTEST)
 
 # ---- CI Validation (checks git clean state) ----
 validate: test
@@ -64,17 +75,4 @@ validate-ci: validate
 # ---- Clean ----
 clean:
 	$(BANNER)
-	@rm -rf $(PUBLIC_DIR) $(ROOT)/resources $(BIN_DIR) .hugo_build.lock .tmp
-
-# ---- Tool binaries (downloaded into ./bin, no root/docker required) ----
-$(HUGO_BIN): | $(BIN_DIR)
-	@if [ ! -f $(HUGO_BIN) ]; then \
-		echo "Installing hugo v$(HUGO_VERSION)..."; \
-		curl -sSL "https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_linux-$(ARCH).tar.gz" | tar -xz -C $(BIN_DIR) hugo; \
-	fi
-
-$(HTMLTEST_BIN): | $(BIN_DIR)
-	@if [ ! -f $(HTMLTEST_BIN) ]; then \
-		echo "Installing htmltest v$(HTMLTEST_VER)..."; \
-		curl -sSL "https://github.com/wjdp/htmltest/releases/download/v$(HTMLTEST_VER)/htmltest_$(HTMLTEST_VER)_linux_$(ARCH).tar.gz" | tar -xz -C $(BIN_DIR) htmltest; \
-	fi
+	@rm -rf $(PUBLIC_DIR) $(ROOT)/resources .hugo_build.lock .tmp
